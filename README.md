@@ -412,29 +412,25 @@ if __name__ == '__main__':
 
 
 
-## 👨‍💻 Architect & Engineering Profile
+---
 
-<table align="center" width="100%">
-  <tr>
-    <td align="center" width="30%">
-      <img src="https://github.com/MOHAMMED-MOSTAFA-ELSAEED.png" width="120px" style="border-radius: 50%;" alt="Mohammed Elsaeed"/><br/><br/>
-      <b>Mohammed Mostafa Elsaeed</b><br/>
-      <i>Cloud Infrastructure & DevOps Engineer</i><br/>
-      Ain Shams University — Computer Engineering
-    </td>
-    <td align="left" width="70%">
-      <h4>Technical Competencies & Certifications:</h4>
-      <ul>
-        <li><b>Cloud Certifications:</b> AWS Certified Solutions Architect – Associate (SAA-C03) • AWS Certified Cloud Practitioner</li>
-        <li><b>Core Specialization:</b> Enterprise Cloud Networking, Zero-Trust Architecture, DevSecOps, Enterprise Linux Systems (RHEL)</li>
-        <li><b>Engineering Focus:</b> Mission-Critical Banking Infrastructure, High-Throughput Routing, PCI-DSS Alignment, Cryptographic Key Systems</li>
-      </ul>
-      <p>
-        <i>"Building cloud architectures where security, operational integrity, and fault tolerance are treated as primary mathematical constants."</i>
-      </p>
-    </td>
-  </tr>
-</table>
+## 👨‍💻 Engineering Profile & Contacts
+
+**Mohammed Mostafa Elsaeed**  
+*Cloud Infrastructure & DevOps Engineer*  
+*Ain Shams University — Computer Engineering*
+
+* **Cloud Certifications:** AWS Certified Solutions Architect – Associate (SAA-C03) • AWS Certified Cloud Practitioner
+* **Core Specialization:** Enterprise Cloud Networking, Zero-Trust Architecture, DevSecOps, Enterprise Linux Systems (RHEL)
+* **Focus Areas:** Mission-Critical Banking Infrastructure, High-Throughput Routing, PCI-DSS Alignment, Cryptographic Key Systems
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/YOUR-LINKEDIN-USERNAME)
+[![GitHub](https://img.shields.io/badge/GitHub-Profile-181717?style=flat&logo=github)](https://github.com/MOHAMMED-MOSTAFA-ELSAEED)
+
+---
+<div align="center">
+  <sub>Engineered with precision for institutional financial cloud compliance. Verified against PCI-DSS v4.0.</sub>
+</div>
 
 ---
 
