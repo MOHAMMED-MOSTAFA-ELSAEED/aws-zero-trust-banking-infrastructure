@@ -424,7 +424,7 @@ if __name__ == '__main__':
 * **Core Specialization:** Enterprise Cloud Networking, Zero-Trust Architecture, DevSecOps, Enterprise Linux Systems (RHEL)
 * **Focus Areas:** Mission-Critical Banking Infrastructure, High-Throughput Routing, PCI-DSS Alignment, Cryptographic Key Systems
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/YOUR-LINKEDIN-USERNAME)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/mohammed-mostafa-elsaeed/)
 [![GitHub](https://img.shields.io/badge/GitHub-Profile-181717?style=flat&logo=github)](https://github.com/MOHAMMED-MOSTAFA-ELSAEED)
 
 ---
