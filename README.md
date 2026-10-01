@@ -1,6 +1,6 @@
 <div align="center">
 
-```text
+<pre align="center"><code>
 ██████╗  ██████╗██╗    ██████╗ ███████╗███████╗    ███████╗ █████╗ ██████╗ ██████╗ ██╗ ██████╗
 ██╔══██╗██╔════╝██║    ██╔══██╗██╔════╝██╔════╝    ██╔════╝██╔══██╗██╔══██╗██╔══██╗██║██╔════╝
 ██████╔╝██║     ██║    ██║  ██║███████╗███████╗    █████╗  ███████║██████╔╝██████╔╝██║██║     
@@ -8,14 +8,14 @@
 ██║     ╚██████╗██║    ██████╔╝███████║███████║    ██║     ██║  ██║██████╔╝██║  ██║██║╚██████╗
 ╚═╝      ╚═════╝╚═╝    ╚═════╝ ╚══════╝╚══════╝    ╚═╝     ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝
           [ PCI-DSS v4.0 LEVEL 1 ENFORCED • ZERO-TRUST AIR-GAPPED FINANCIAL ENGINE ]
-```
+</code></pre>
 
 # 🏦 AUTONOMOUS FINTECH CORE FABRIC
 ### Mission-Critical Hybrid Cloud Architecture • PCI-DSS v4.0 Level 1 Baseline • Systems Engineering Whitepaper
 
 <br/>
 
-[![Infrastructure: AWS](https://img.shields.io/badge/AWS-Enterprise_VPC-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=FF9900)](https://aws.amazon.com/)
+[![Infrastructure: AWS](https://img.shields.io/badge/AWS-Enterprise_VPC-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=FF9900)]([https://aws.amazon.com/](https://aws.amazon.com/))
 [![Compliance: PCI-DSS v4.0](https://img.shields.io/badge/PCI--DSS_v4.0-Level_1_Certified-008559?style=for-the-badge&logo=visa&logoColor=white)](#-regulatory-compliance-matrix-pci-dss-v40)
 [![Perimeter: Zero-Trust](https://img.shields.io/badge/Security-Zero--Trust_SSM_Only-critical?style=for-the-badge&logo=auth0&logoColor=white)](#-regulatory-compliance-matrix-pci-dss-v40)
 [![Cryptography: Envelope KMS](https://img.shields.io/badge/Cryptography-Hardware_KMS_CMK-blue?style=for-the-badge&logo=1password&logoColor=white)](#module-2-identity-cryptography--access-boundaries)
@@ -132,34 +132,34 @@ All architectural controls have been formally verified through live runtime exec
 
 ### Module 1: Network Topology & Route Isolation
 
-<table>
+<table align="center" width="100%">
   <tr>
-    <td width="50%">
-      <h4 align="center">01. 3-Tier Multi-AZ Resource Map</h4>
+    <td width="50%" align="center">
+      <h4>01. 3-Tier Multi-AZ Resource Map</h4>
       <img src="screenshots/01-vpc-resource-map.png" alt="VPC Resource Map"/>
-      <p><b>Verification:</b> Complete segregation across 6 subnets over <code>eu-west-1a</code> and <code>eu-west-1b</code>. No database or private engines reside in public subnets.</p>
+      <p align="center"><b>Verification:</b> Complete segregation across 6 subnets over <code>eu-west-1a</code> and <code>eu-west-1b</code>. No database or private engines reside in public subnets.</p>
     </td>
-    <td width="50%">
-      <h4 align="center">02. Private Application Route Table</h4>
+    <td width="50%" align="center">
+      <h4>02. Private Application Route Table</h4>
       <img src="screenshots/02-private-route-table.png" alt="Private Route Table"/>
-      <p><b>Verification:</b> Confirms complete absence of default internet route (<code>0.0.0.0/0 -&gt; igw</code>). Traffic remains inside internal fabrics.</p>
+      <p align="center"><b>Verification:</b> Confirms complete absence of default internet route (<code>0.0.0.0/0 -&gt; igw</code>). Traffic remains inside internal fabrics.</p>
     </td>
   </tr>
   <tr>
-    <td width="50%">
-      <h4 align="center">03. Air-Gapped Data Layer Route Table</h4>
+    <td width="50%" align="center">
+      <h4>03. Air-Gapped Data Layer Route Table</h4>
       <img src="screenshots/03-isolated-route-table.png" alt="Isolated Route Table"/>
-      <p><b>Verification:</b> Strict PCI-DSS baseline proof showing exclusively <code>10.100.0.0/16 -&gt; local</code>. Impossible for database layer to route externally.</p>
+      <p align="center"><b>Verification:</b> Strict PCI-DSS baseline proof showing exclusively <code>10.100.0.0/16 -&gt; local</code>. Impossible for database layer to route externally.</p>
     </td>
-    <td width="50%">
-      <h4 align="center">04. AWS PrivateLink VPC Endpoints Hub</h4>
+    <td width="50%" align="center">
+      <h4>04. AWS PrivateLink VPC Endpoints Hub</h4>
       <img src="screenshots/04-vpc-endpoints-hub.png" alt="Endpoints Hub"/>
-      <p><b>Verification:</b> Interface Endpoints for SSM, KMS, and Gateway Endpoint for S3 confirmed in healthy <code>Available</code> state.</p>
+      <p align="center"><b>Verification:</b> Interface Endpoints for SSM, KMS, and Gateway Endpoint for S3 confirmed in healthy <code>Available</code> state.</p>
     </td>
   </tr>
   <tr>
-    <td colspan="2">
-      <h4 align="center">05. Private DNS Resolution Override</h4>
+    <td colspan="2" align="center">
+      <h4>05. Private DNS Resolution Override</h4>
       <div align="center"><img src="screenshots/05-ssm-endpoint-dns.png" width="70%" alt="Private DNS Resolution"/></div>
       <p align="center"><b>Verification:</b> Validates that queries originating from internal engines to <code>ssm.eu-west-1.amazonaws.com</code> are hijacked at Route 53 resolver and mapped to internal private IPs.</p>
     </td>
@@ -168,34 +168,34 @@ All architectural controls have been formally verified through live runtime exec
 
 ### Module 2: Identity, Cryptography & Access Boundaries
 
-<table>
+<table align="center" width="100%">
   <tr>
-    <td width="50%">
-      <h4 align="center">06. Dedicated KMS CMK Encryption Key</h4>
+    <td width="50%" align="center">
+      <h4>06. Dedicated KMS CMK Encryption Key</h4>
       <img src="screenshots/06-kms-key-status.png" alt="KMS Key Status"/>
-      <p><b>Verification:</b> Customer Managed Key (CMK) <code>alias/fintech-core</code> enabled with automated hardware rotation.</p>
+      <p align="center"><b>Verification:</b> Customer Managed Key (CMK) <code>alias/fintech-core</code> enabled with automated hardware rotation.</p>
     </td>
-    <td width="50%">
-      <h4 align="center">07. S3 Compliance Vault WORM Properties</h4>
+    <td width="50%" align="center">
+      <h4>07. S3 Compliance Vault WORM Properties</h4>
       <img src="screenshots/07-s3-vault-properties.png" alt="S3 Bucket Properties"/>
-      <p><b>Verification:</b> Enforces Server-Side Encryption with KMS (SSE-KMS) paired with Bucket Versioning for tamper-proof auditing.</p>
+      <p align="center"><b>Verification:</b> Enforces Server-Side Encryption with KMS (SSE-KMS) paired with Bucket Versioning for tamper-proof auditing.</p>
     </td>
   </tr>
   <tr>
-    <td width="50%">
-      <h4 align="center">08. Block Public Access (100% Enforced)</h4>
+    <td width="50%" align="center">
+      <h4>08. Block Public Access (100% Enforced)</h4>
       <img src="screenshots/08-s3-block-public-access.png" alt="S3 Block Public Access"/>
-      <p><b>Verification:</b> All four public exposure vectors toggled ON at the bucket level, preventing public leakage.</p>
+      <p align="center"><b>Verification:</b> All four public exposure vectors toggled ON at the bucket level, preventing public leakage.</p>
     </td>
-    <td width="50%">
-      <h4 align="center">09. Machine Role Policy Attachment</h4>
+    <td width="50%" align="center">
+      <h4>09. Machine Role Policy Attachment</h4>
       <img src="screenshots/09-iam-role-policies.png" alt="IAM Role Summary"/>
-      <p><b>Verification:</b> The instance execution profile couples managed systems administration (<code>AmazonSSMManagedInstanceCore</code>) with dedicated inline policies.</p>
+      <p align="center"><b>Verification:</b> The instance execution profile couples managed systems administration (<code>AmazonSSMManagedInstanceCore</code>) with dedicated inline policies.</p>
     </td>
   </tr>
   <tr>
-    <td colspan="2">
-      <h4 align="center">10. Custom Scoped IAM Inline Policy</h4>
+    <td colspan="2" align="center">
+      <h4>10. Custom Scoped IAM Inline Policy</h4>
       <div align="center"><img src="screenshots/10-iam-inline-policy.png" width="70%" alt="IAM Inline Policy"/></div>
       <p align="center"><b>Verification:</b> Scoped permissions locking S3 <code>PutObject</code>, <code>GetObject</code>, and <code>ListBucket</code> actions strictly to the audit vault bucket ARN.</p>
     </td>
@@ -204,51 +204,51 @@ All architectural controls have been formally verified through live runtime exec
 
 ### Module 3: Edge Ingress & Load Balancing Resilience
 
-<table>
+<table align="center" width="100%">
   <tr>
-    <td width="50%">
-      <h4 align="center">11. AWS WAF v2 Protective Rulesets</h4>
+    <td width="50%" align="center">
+      <h4>11. AWS WAF v2 Protective Rulesets</h4>
       <img src="screenshots/11-waf-rules-dashboard.png" alt="WAF Rules"/>
-      <p><b>Verification:</b> Regional Web ACL actively inspecting traffic via AWS Core Rule Set (CRS) and SQLi mitigation engines.</p>
+      <p align="center"><b>Verification:</b> Regional Web ACL actively inspecting traffic via AWS Core Rule Set (CRS) and SQLi mitigation engines.</p>
     </td>
-    <td width="50%">
-      <h4 align="center">12. Web ACL to ALB Resource Binding</h4>
+    <td width="50%" align="center">
+      <h4>12. Web ACL to ALB Resource Binding</h4>
       <img src="screenshots/12-waf-alb-association.png" alt="WAF Associated Resources"/>
-      <p><b>Verification:</b> Verification that the public Application Load Balancer is enclosed directly within the protective perimeter of the Web ACL.</p>
+      <p align="center"><b>Verification:</b> Verification that the public Application Load Balancer is enclosed directly within the protective perimeter of the Web ACL.</p>
     </td>
   </tr>
   <tr>
-    <td width="50%">
-      <h4 align="center">13. Public ALB Configuration & DNS</h4>
+    <td width="50%" align="center">
+      <h4>13. Public ALB Configuration & DNS</h4>
       <img src="screenshots/13-alb-details.png" alt="ALB Details"/>
-      <p><b>Verification:</b> Dual-AZ entry endpoint specifications displaying internet-facing scheme, DNS distribution, and security group isolation.</p>
+      <p align="center"><b>Verification:</b> Dual-AZ entry endpoint specifications displaying internet-facing scheme, DNS distribution, and security group isolation.</p>
     </td>
-    <td width="50%">
-      <h4 align="center">14. Target Group Health Status (2/2 Healthy)</h4>
+    <td width="50%" align="center">
+      <h4>14. Target Group Health Status (2/2 Healthy)</h4>
       <img src="screenshots/14-target-group-healthy.png" alt="Target Group Status"/>
-      <p><b>Verification:</b> Critical operational milestone: Both <code>Engine 01</code> and <code>02</code> reporting healthy status across AZs on port 8080.</p>
+      <p align="center"><b>Verification:</b> Critical operational milestone: Both <code>Engine 01</code> and <code>02</code> reporting healthy status across AZs on port 8080.</p>
     </td>
   </tr>
 </table>
 
 ### Module 4: Compute Hardening & Air-Gapped Data Layer
 
-<table>
+<table align="center" width="100%">
   <tr>
-    <td width="50%">
-      <h4 align="center">15. Zero-Public IP Compute Configuration</h4>
+    <td width="50%" align="center">
+      <h4>15. Zero-Public IP Compute Configuration</h4>
       <img src="screenshots/15-ec2-private-instances.png" alt="EC2 Instance Details"/>
-      <p><b>Verification:</b> Proof of hardened instance configuration showing only private RFC 1918 addressing assigned (<code>10.100.10.x</code>) and empty Public IPv4 field.</p>
+      <p align="center"><b>Verification:</b> Proof of hardened instance configuration showing only private RFC 1918 addressing assigned (<code>10.100.10.x</code>) and empty Public IPv4 field.</p>
     </td>
-    <td width="50%">
-      <h4 align="center">16. Application Firewall Tiering</h4>
+    <td width="50%" align="center">
+      <h4>16. Application Firewall Tiering</h4>
       <img src="screenshots/16-app-security-group.png" alt="App Security Group Rules"/>
-      <p><b>Verification:</b> Stateful firewall rules showing TCP port 8080 traffic permitted exclusively from the ALB security group ID.</p>
+      <p align="center"><b>Verification:</b> Stateful firewall rules showing TCP port 8080 traffic permitted exclusively from the ALB security group ID.</p>
     </td>
   </tr>
   <tr>
-    <td colspan="2">
-      <h4 align="center">17. Air-Gapped Data Cluster Infrastructure</h4>
+    <td colspan="2" align="center">
+      <h4>17. Air-Gapped Data Cluster Infrastructure</h4>
       <div align="center"><img src="screenshots/17-isolated-data-tier.png" width="70%" alt="Isolated Data Stores"/></div>
       <p align="center"><b>Verification:</b> Demonstrates ElastiCache Valkey in-memory clustering operating cleanly within the isolated, air-gapped subnet boundaries.</p>
     </td>
@@ -257,24 +257,24 @@ All architectural controls have been formally verified through live runtime exec
 
 ### Module 5: Live Execution Proofs & Terminal Outputs
 
-<table>
+<table align="center" width="100%">
   <tr>
-    <td colspan="2">
-      <h4 align="center">18. Zero-Internet S3 Ledger Write (via SSM)</h4>
+    <td colspan="2" align="center">
+      <h4>18. Zero-Internet S3 Ledger Write (via SSM)</h4>
       <div align="center"><img src="screenshots/18-ssm-s3-audit-upload.png" width="80%" alt="SSM S3 Upload"/></div>
       <p align="center"><b>Execution Proof:</b> Interactive shell via AWS SSM Session Manager uploading encrypted audit record over PrivateLink without internet access.</p>
     </td>
   </tr>
   <tr>
-    <td width="50%">
-      <h4 align="center">19. Edge Ingress Health Check Polling</h4>
+    <td width="50%" align="center">
+      <h4>19. Edge Ingress Health Check Polling</h4>
       <img src="screenshots/19-api-health-check.png" alt="API Health Check"/>
-      <p><b>Verification:</b> HTTP GET <code>/health</code> polling over browser via ALB & WAF returning operational status 200 OK.</p>
+      <p align="center"><b>Verification:</b> HTTP GET <code>/health</code> polling over browser via ALB & WAF returning operational status 200 OK.</p>
     </td>
-    <td width="50%">
-      <h4 align="center">20. Live Financial Transaction Clearance</h4>
+    <td width="50%" align="center">
+      <h4>20. Live Financial Transaction Clearance</h4>
       <img src="screenshots/20-api-live-transaction-post.png" alt="Live POST Transaction"/>
-      <p><b>Clearance Proof:</b> HTTP POST <code>/api/v1/transaction</code> execution authorizing $100K payment cleared via Core Banking.</p>
+      <p align="center"><b>Clearance Proof:</b> HTTP POST <code>/api/v1/transaction</code> execution authorizing $100K payment cleared via Core Banking.</p>
     </td>
   </tr>
 </table>
@@ -415,16 +415,22 @@ if __name__ == '__main__':
 
 ## 👨‍💻 Engineering Profile & Contacts
 
+<div align="center">
+
 **Mohammed Mostafa Elsaeed**  
 *Cloud Infrastructure & DevOps Engineer*  
 *Ain Shams University — Computer Engineering*
 
-- **Cloud Certifications:** AWS Certified Solutions Architect – Associate (SAA-C03) • AWS Certified Cloud Practitioner
-- **Core Specialization:** Enterprise Cloud Networking, Zero-Trust Architecture, DevSecOps, Enterprise Linux Systems (RHEL)
-- **Focus Areas:** Mission-Critical Banking Infrastructure, High-Throughput Routing, PCI-DSS Alignment, Cryptographic Key Systems
+<br/>
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin)](https://www.linkedin.com/in/mohammed-mostafa-elsaeed/)
-[![GitHub](https://img.shields.io/badge/GitHub-Profile-181717?style=flat&logo=github)](https://github.com/MOHAMMED-MOSTAFA-ELSAEED)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/mohammed-mostafa-elsaeed/)
+[![GitHub](https://img.shields.io/badge/GitHub-Profile-181717?style=for-the-badge&logo=github)](https://github.com/MOHAMMED-MOSTAFA-ELSAEED)
+
+</div>
+
+* **Cloud Certifications:** AWS Certified Solutions Architect – Associate (SAA-C03) • AWS Certified Cloud Practitioner
+* **Core Specialization:** Enterprise Cloud Networking, Zero-Trust Architecture, DevSecOps, Enterprise Linux Systems (RHEL)
+* **Focus Areas:** Mission-Critical Banking Infrastructure, High-Throughput Routing, PCI-DSS Alignment, Cryptographic Key Systems
 
 ---
 
