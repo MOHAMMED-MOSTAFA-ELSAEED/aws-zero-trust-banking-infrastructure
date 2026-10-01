@@ -5,10 +5,10 @@
 **A zero-trust, dual-AZ payment processing architecture on AWS, designed against PCI-DSS v4.0 controls and connected to an on-premises core banking site over IPsec/BGP.**
 
 [![AWS](https://img.shields.io/badge/AWS-Multi--AZ-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![PCI-DSS](https://img.shields.io/badge/PCI--DSS_v4.0-Aligned-008559?style=for-the-badge)](#-pci-dss-v40-control-mapping)
-[![Zero Trust](https://img.shields.io/badge/Access-Zero--Trust_(SSM)-critical?style=for-the-badge)](#-security-design)
+[![PCI-DSS](https://img.shields.io/badge/PCI--DSS_v4.0-Aligned-008559?style=for-the-badge&logo=visa&logoColor=white)](#-pci-dss-v40-control-mapping)
+[![Zero Trust](https://img.shields.io/badge/Access-Zero--Trust_(SSM)-critical?style=for-the-badge&logo=auth0&logoColor=white)](#-security-design)
 [![KMS](https://img.shields.io/badge/Encryption-KMS_CMK-blue?style=for-the-badge&logo=amazon-aws&logoColor=white)](#-security-design)
-[![Transit Gateway](https://img.shields.io/badge/Hybrid-Transit_Gateway_%2B_BGP-8C4FFF?style=for-the-badge)](#-transaction-flow)
+[![Transit Gateway](https://img.shields.io/badge/Hybrid-Transit_Gateway_%2B_BGP-8C4FFF?style=for-the-badge&logo=cisco&logoColor=white)](#-transaction-flow)
 
 [Overview](#-overview) · [Architecture](#-architecture) · [Security](#-security-design) · [PCI-DSS Mapping](#-pci-dss-v40-control-mapping) · [Transaction Flow](#-transaction-flow) · [Verification Gallery](#-verification-gallery) · [Hardening](#-os--kernel-hardening) · [Resilience](#-resilience--failure-modes) · [Sample Service](#-sample-clearing-service) · [Author](#-author)
 
@@ -30,7 +30,7 @@ Perimeter-only defense is not enough for financial workloads. This project imple
 
 ---
 
-## 🏗️ Architecture
+## 🏗️️ Architecture
 
 <div align="center">
   <img src="architecture.png" alt="High-level architecture diagram" width="100%">
@@ -111,60 +111,157 @@ All 20 artifacts below are screenshots from the live deployment.
 
 ### Module 1 · Network Topology
 
-| | |
-| :---: | :---: |
-| **01 · Multi-AZ resource map**<br/><img src="screenshots/01-vpc-resource-map.png" alt="VPC resource map"/><br/>Six subnets across two AZs; nothing sensitive in public subnets. | **02 · Private app route table**<br/><img src="screenshots/02-private-route-table.png" alt="Private route table"/><br/>No `0.0.0.0/0 → igw` route. |
-| **03 · Isolated data route table**<br/><img src="screenshots/03-isolated-route-table.png" alt="Isolated route table"/><br/>Only `10.100.0.0/16 → local`. | **04 · VPC endpoints**<br/><img src="screenshots/04-vpc-endpoints-hub.png" alt="VPC endpoints"/><br/>SSM, KMS interface endpoints and S3 gateway endpoint available. |
-
-**05 · Private DNS resolution**
-<div align="center"><img src="screenshots/05-ssm-endpoint-dns.png" width="70%" alt="Private DNS resolution"/></div>
-
-Internal lookups of `ssm.eu-west-1.amazonaws.com` resolve to private endpoint IPs.
+<table align="center" width="100%">
+  <tr>
+    <td width="50%" align="center">
+      <b>01 · Multi-AZ resource map</b><br/>
+      <img src="screenshots/01-vpc-resource-map.png" alt="VPC resource map"/><br/>
+      <sub>Six subnets across two AZs; nothing sensitive in public subnets.</sub>
+    </td>
+    <td width="50%" align="center">
+      <b>02 · Private app route table</b><br/>
+      <img src="screenshots/02-private-route-table.png" alt="Private route table"/><br/>
+      <sub>No <code>0.0.0.0/0 → igw</code> route.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <b>03 · Isolated data route table</b><br/>
+      <img src="screenshots/03-isolated-route-table.png" alt="Isolated route table"/><br/>
+      <sub>Only <code>10.100.0.0/16 → local</code>.</sub>
+    </td>
+    <td width="50%" align="center">
+      <b>04 · VPC endpoints</b><br/>
+      <img src="screenshots/04-vpc-endpoints-hub.png" alt="VPC endpoints"/><br/>
+      <sub>SSM, KMS interface endpoints and S3 gateway endpoint available.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <b>05 · Private DNS resolution</b><br/>
+      <div align="center"><img src="screenshots/05-ssm-endpoint-dns.png" width="70%" alt="Private DNS resolution"/></div>
+      <sub>Internal lookups of <code>ssm.eu-west-1.amazonaws.com</code> resolve to private endpoint IPs.</sub>
+    </td>
+  </tr>
+</table>
 
 ### Module 2 · Identity & Cryptography
 
-| | |
-| :---: | :---: |
-| **06 · KMS CMK**<br/><img src="screenshots/06-kms-key-status.png" alt="KMS key status"/><br/>`alias/fintech-core`, rotation enabled. | **07 · S3 vault properties**<br/><img src="screenshots/07-s3-vault-properties.png" alt="S3 vault properties"/><br/>SSE-KMS and versioning enabled. |
-| **08 · Block Public Access**<br/><img src="screenshots/08-s3-block-public-access.png" alt="Block Public Access"/><br/>All four settings on. | **09 · IAM role**<br/><img src="screenshots/09-iam-role-policies.png" alt="IAM role policies"/><br/>SSM core policy plus inline policy. |
-
-**10 · Scoped inline policy**
-<div align="center"><img src="screenshots/10-iam-inline-policy.png" width="70%" alt="IAM inline policy"/></div>
-
-`PutObject`, `GetObject`, and `ListBucket` restricted to the audit vault ARN.
+<table align="center" width="100%">
+  <tr>
+    <td width="50%" align="center">
+      <b>06 · KMS CMK</b><br/>
+      <img src="screenshots/06-kms-key-status.png" alt="KMS key status"/><br/>
+      <sub><code>alias/fintech-core</code>, rotation enabled.</sub>
+    </td>
+    <td width="50%" align="center">
+      <b>07 · S3 vault properties</b><br/>
+      <img src="screenshots/07-s3-vault-properties.png" alt="S3 vault properties"/><br/>
+      <sub>SSE-KMS and versioning enabled.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <b>08 · Block Public Access</b><br/>
+      <img src="screenshots/08-s3-block-public-access.png" alt="Block Public Access"/><br/>
+      <sub>All four settings on.</sub>
+    </td>
+    <td width="50%" align="center">
+      <b>09 · IAM role</b><br/>
+      <img src="screenshots/09-iam-role-policies.png" alt="IAM role policies"/><br/>
+      <sub>SSM core policy plus inline policy.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <b>10 · Scoped inline policy</b><br/>
+      <div align="center"><img src="screenshots/10-iam-inline-policy.png" width="70%" alt="IAM inline policy"/></div>
+      <sub><code>PutObject</code>, <code>GetObject</code>, and <code>ListBucket</code> restricted to the audit vault ARN.</sub>
+    </td>
+  </tr>
+</table>
 
 ### Module 3 · Edge & Load Balancing
 
-| | |
-| :---: | :---: |
-| **11 · WAF rules**<br/><img src="screenshots/11-waf-rules-dashboard.png" alt="WAF rules"/><br/>Core Rule Set and SQLi protections. | **12 · WAF ↔ ALB association**<br/><img src="screenshots/12-waf-alb-association.png" alt="WAF association"/><br/>Web ACL bound to the public ALB. |
-| **13 · ALB configuration**<br/><img src="screenshots/13-alb-details.png" alt="ALB details"/><br/>Internet-facing, dual-AZ, dedicated security group. | **14 · Target health**<br/><img src="screenshots/14-target-group-healthy.png" alt="Target group health"/><br/>2/2 targets healthy on port 8080. |
+<table align="center" width="100%">
+  <tr>
+    <td width="50%" align="center">
+      <b>11 · WAF rules</b><br/>
+      <img src="screenshots/11-waf-rules-dashboard.png" alt="WAF rules"/><br/>
+      <sub>Core Rule Set and SQLi protections.</sub>
+    </td>
+    <td width="50%" align="center">
+      <b>12 · WAF ↔ ALB association</b><br/>
+      <img src="screenshots/12-waf-alb-association.png" alt="WAF association"/><br/>
+      <sub>Web ACL bound to the public ALB.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <b>13 · ALB configuration</b><br/>
+      <img src="screenshots/13-alb-details.png" alt="ALB details"/><br/>
+      <sub>Internet-facing, dual-AZ, dedicated security group.</sub>
+    </td>
+    <td width="50%" align="center">
+      <b>14 · Target health</b><br/>
+      <img src="screenshots/14-target-group-healthy.png" alt="Target group health"/><br/>
+      <sub>2/2 targets healthy on port 8080.</sub>
+    </td>
+  </tr>
+</table>
 
 ### Module 4 · Compute & Data Tier
 
-| | |
-| :---: | :---: |
-| **15 · Private instances**<br/><img src="screenshots/15-ec2-private-instances.png" alt="EC2 private instances"/><br/>RFC 1918 addresses only; no public IPv4. | **16 · App security group**<br/><img src="screenshots/16-app-security-group.png" alt="App security group"/><br/>Port 8080 allowed only from the ALB security group. |
-
-**17 · Isolated data tier**
-<div align="center"><img src="screenshots/17-isolated-data-tier.png" width="70%" alt="Isolated data tier"/></div>
-
-ElastiCache (Valkey) running inside the isolated subnets.
+<table align="center" width="100%">
+  <tr>
+    <td width="50%" align="center">
+      <b>15 · Private instances</b><br/>
+      <img src="screenshots/15-ec2-private-instances.png" alt="EC2 private instances"/><br/>
+      <sub>RFC 1918 addresses only; no public IPv4.</sub>
+    </td>
+    <td width="50%" align="center">
+      <b>16 · App security group</b><br/>
+      <img src="screenshots/16-app-security-group.png" alt="App security group"/><br/>
+      <sub>Port 8080 allowed only from the ALB security group.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <b>17 · Isolated data tier</b><br/>
+      <div align="center"><img src="screenshots/17-isolated-data-tier.png" width="70%" alt="Isolated data tier"/></div>
+      <sub>ElastiCache (Valkey) running inside the isolated subnets.</sub>
+    </td>
+  </tr>
+</table>
 
 ### Module 5 · Live Execution
 
-**18 · S3 audit write via SSM (no internet)**
-<div align="center"><img src="screenshots/18-ssm-s3-audit-upload.png" width="80%" alt="SSM S3 upload"/></div>
-
-| | |
-| :---: | :---: |
-| **19 · Health check**<br/><img src="screenshots/19-api-health-check.png" alt="API health check"/><br/>`GET /health` through WAF and ALB returns 200. | **20 · Transaction POST**<br/><img src="screenshots/20-api-live-transaction-post.png" alt="Transaction POST"/><br/>`POST /api/v1/transaction` returns an approved response. |
+<table align="center" width="100%">
+  <tr>
+    <td colspan="2" align="center">
+      <b>18 · S3 audit write via SSM (no internet)</b><br/>
+      <div align="center"><img src="screenshots/18-ssm-s3-audit-upload.png" width="80%" alt="SSM S3 upload"/></div>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <b>19 · Health check</b><br/>
+      <img src="screenshots/19-api-health-check.png" alt="API health check"/><br/>
+      <sub><code>GET /health</code> through WAF and ALB returns 200.</sub>
+    </td>
+    <td width="50%" align="center">
+      <b>20 · Transaction POST</b><br/>
+      <img src="screenshots/20-api-live-transaction-post.png" alt="Transaction POST"/><br/>
+      <sub><code>POST /api/v1/transaction</code> returns an approved response.</sub>
+    </td>
+  </tr>
+</table>
 
 ---
 
 ## 🛠️ Deployment
 
-- **Provisioning:** AWS Console and AWS CLI (CloudShell).
+- **Provisioning:** AWS Management Console and AWS CLI (CloudShell).
 - **Bootstrap:** EC2 user-data scripts install the service as an unprivileged `systemd` unit and apply the kernel hardening profile below.
 - **Validation:** Route table review, port-scan checks, and audit-write tests, followed by resource teardown to control cost.
 
@@ -204,10 +301,10 @@ Expected behavior for each failure domain. Replace the recovery column with your
 
 | Scenario | Self-healing mechanism | Expected recovery |
 | :--- | :--- | :--- |
-| AZ failure | ALB health checks remove unhealthy targets; traffic shifts to the surviving AZ | A few health-check cycles |
-| Aurora primary failure | Automatic Multi-AZ failover; cluster endpoint DNS points to the new primary | Typically tens of seconds |
-| VPN tunnel failure | BGP withdraws the failed path; traffic moves to the second tunnel | Seconds (depends on BGP timers) |
-| Compromised instance | No local keys or SSH; revoking the IAM role terminates SSM access | Immediate on revocation |
+| **AZ failure** | ALB health checks remove unhealthy targets; traffic shifts to the surviving AZ | A few health-check cycles |
+| **Aurora primary failure** | Automatic Multi-AZ failover; cluster endpoint DNS points to the new primary | Typically tens of seconds |
+| **VPN tunnel failure** | BGP withdraws the failed path; traffic moves to the second tunnel | Seconds (depends on BGP timers) |
+| **Compromised instance** | No local keys or SSH; revoking the IAM role terminates SSM access | Immediate on revocation |
 
 ---
 
@@ -215,12 +312,12 @@ Expected behavior for each failure domain. Replace the recovery column with your
 
 The payment engine is a mock built on the Python 3 standard library only (no third-party packages). It returns canned responses to demonstrate the traffic path; it does not process real payments.
 
-<details>
-<summary><b>View source (<code>app/clearing_daemon.py</code>)</b></summary>
-
 ```python
 #!/usr/bin/env python3
-"""Mock financial clearing daemon (standard library only)."""
+"""
+Mock financial clearing daemon (standard library only).
+Path: app/clearing_daemon.py
+"""
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 import socket
@@ -264,7 +361,8 @@ class FinancialClearingHandler(BaseHTTPRequestHandler):
 
 
 def run_server():
-    httpd = HTTPServer(("0.0.0.0", 8080), FinancialClearingHandler)
+    server_address = ("0.0.0.0", 8080)
+    httpd = HTTPServer(server_address, FinancialClearingHandler)
     print("[*] Financial core daemon listening on port 8080...")
     try:
         httpd.serve_forever()
@@ -278,22 +376,29 @@ if __name__ == "__main__":
     run_server()
 ```
 
-</details>
-
 ---
 
 ## 👨‍💻 Author
 
-**Mohammed Mostafa Elsaeed**
-Cloud Infrastructure & DevOps Engineer · Computer Engineering, Ain Shams University
+<div align="center">
+
+**Mohammed Mostafa Elsaeed**  
+*Cloud Infrastructure & DevOps Engineer*  
+*Ain Shams University — Computer Engineering*
+
+<br/>
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/mohammed-mostafa-elsaeed/)
 [![GitHub](https://img.shields.io/badge/GitHub-Profile-181717?style=for-the-badge&logo=github)](https://github.com/MOHAMMED-MOSTAFA-ELSAEED)
 
-- **Certifications:** AWS Certified Solutions Architect – Associate (SAA-C03) · AWS Certified Cloud Practitioner
-- **Specialization:** Cloud networking, zero-trust architecture, DevSecOps, enterprise Linux (RHEL)
-- **Focus:** Banking-grade infrastructure, hybrid routing, PCI-DSS alignment, key management
+</div>
+
+* **Certifications:** AWS Certified Solutions Architect – Associate (SAA-C03) · AWS Certified Cloud Practitioner
+* **Specialization:** Cloud networking, zero-trust architecture, DevSecOps, enterprise Linux (RHEL)
+* **Focus:** Banking-grade infrastructure, hybrid routing, PCI-DSS alignment, key management
 
 ---
 
-<div align="center"><sub>Reference architecture for financial cloud infrastructure, designed against PCI-DSS v4.0 controls.</sub></div>
+<div align="center">
+  <sub>Reference architecture for financial cloud infrastructure, designed against PCI-DSS v4.0 controls.</sub>
+</div>
