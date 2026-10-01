@@ -410,79 +410,7 @@ if __name__ == '__main__':
     run_server()
 ```
 
----
 
-## 🧹 Automated Cloud Decommissioning Routine
-
-The infrastructure includes an automated, dependency-aware Bash lifecycle script to safely purge regional resources via AWS CloudShell without orphaned billing artifacts:
-
-<details>
-<summary><b>View Decommissioning Engine (scripts/teardown.sh)</b></summary>
-
-```bash
-#!/bin/bash
-set -euo pipefail
-REGION="eu-west-1"
-
-echo "=== Deprovisioning FinTech Cloud Fabric [$REGION] ==="
-
-# 1. Deprovision Application Load Balancer
-for alb in $(aws elbv2 describe-load-balancers --region $REGION --query "LoadBalancers[?contains(LoadBalancerName, 'fintech')].LoadBalancerArn" --output text); do
-    aws elbv2 delete-load-balancer --load-balancer-arn "$alb" --region $REGION
-done
-sleep 10
-
-# 2. Decommission Target Groups
-for tg in $(aws elbv2 describe-target-groups --region $REGION --query "TargetGroups[?contains(TargetGroupName, 'fintech') || contains(TargetGroupName, 'tg-payment')].TargetGroupArn" --output text); do
-    aws elbv2 delete-target-group --target-group-arn "$tg" --region $REGION
-done
-
-# 3. Terminate Compute Nodes
-INSTANCES=$(aws ec2 describe-instances --region $REGION --filters "Name=tag:Name,Values=*Payment*" "Name=instance-state-name,Values=running,stopped,pending" --query "Reservations[].Instances[].InstanceId" --output text)
-if [ -n "$INSTANCES" ]; then
-    aws ec2 terminate-instances --instance-ids $INSTANCES --region $REGION
-    aws ec2 wait instance-terminated --instance-ids $INSTANCES --region $REGION
-fi
-
-# 4. Remove Edge WAF ACLs
-for waf in $(aws wafv2 list-web-acls --scope REGIONAL --region $REGION --query "WebACLs[?contains(Name, 'fintech')].[Name,Id,LockToken]" --output text | tr '\t' '|'); do
-    aws wafv2 delete-web-acl --name "$(echo "$waf" | cut -d'|' -f1)" --scope REGIONAL --id "$(echo "$waf" | cut -d'|' -f2)" --lock-token "$(echo "$waf" | cut -d'|' -f3)" --region $REGION
-done
-
-# 5. Purge S3 Compliance Vault
-BUCKET=$(aws s3api list-buckets --query "Buckets[?contains(Name, 'fintech-audit-vault')].Name" --output text)
-if [ -n "$BUCKET" ]; then
-    aws s3api delete-objects --bucket "$BUCKET" --delete "$(aws s3api list-object-versions --bucket "$BUCKET" --query='{Objects: Versions[].{Key:Key,VersionId:VersionId}}' --output json)" 2>/dev/null || true
-    aws s3api delete-objects --bucket "$BUCKET" --delete "$(aws s3api list-object-versions --bucket "$BUCKET" --query='{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}' --output json)" 2>/dev/null || true
-    aws s3api delete-bucket --bucket "$BUCKET" --region $REGION
-fi
-
-# 6. Delete Hybrid TGW Interconnect
-for att in $(aws ec2 describe-transit-gateway-vpc-attachments --region $REGION --filters "Name=state,Values=available" --query "TransitGatewayVpcAttachments[].TransitGatewayAttachmentId" --output text); do
-    aws ec2 delete-transit-gateway-vpc-attachment --transit-gateway-attachment-id "$att" --region $REGION
-done
-sleep 15
-for tgw in $(aws ec2 describe-transit-gateways --region $REGION --filters "Name=state,Values=available" --query "TransitGateways[].TransitGatewayId" --output text); do
-    aws ec2 delete-transit-gateway --transit-gateway-id "$tgw" --region $REGION
-done
-
-# 7. Delete VPC & Subnets
-VPC_ID=$(aws ec2 describe-vpcs --region $REGION --filters "Name=tag:Name,Values=*fintech*" --query "Vpcs[0].VpcId" --output text)
-if [ -n "$VPC_ID" ] && [ "$VPC_ID" != "None" ]; then
-    for ep in $(aws ec2 describe-vpc-endpoints --region $REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "VpcEndpoints[].VpcEndpointId" --output text); do
-        aws ec2 delete-vpc-endpoints --vpc-endpoint-ids "$ep" --region $REGION 2>/dev/null || true
-    done
-    for subnet in $(aws ec2 describe-subnets --region $REGION --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[].SubnetId" --output text); do
-        aws ec2 delete-subnet --subnet-id "$subnet" --region $REGION
-    done
-    aws ec2 delete-vpc --vpc-id "$VPC_ID" --region $REGION
-fi
-
-echo "=== FinTech Cloud Infrastructure Successfully Purged ==="
-```
-</details>
-
----
 
 ## 👨‍💻 Architect & Engineering Profile
 
