@@ -1,10 +1,17 @@
 <div align="center">
 
-<code>PRODUCTION SPECIFICATION • ISO 20022 / PCI-DSS v4.0 LEVEL 1 BASELINE</code>
+```text
+██████╗  ██████╗██╗    ██████╗ ███████╗███████╗    ███████╗ █████╗ ██████╗ ██████╗ ██╗ ██████╗
+██╔══██╗██╔════╝██║    ██╔══██╗██╔════╝██╔════╝    ██╔════╝██╔══██╗██╔══██╗██╔══██╗██║██╔════╝
+██████╔╝██║     ██║    ██║  ██║███████╗███████╗    █████╗  ███████║██████╔╝██████╔╝██║██║     
+██╔═══╝ ██║     ██║    ██║  ██║╚════██║╚════██║    ██╔══╝  ██╔══██║██╔══██╗██╔══██╗██║██║     
+██║     ╚██████╗██║    ██████╔╝███████║███████║    ██║     ██║  ██║██████╔╝██║  ██║██║╚██████╗
+╚═╝      ╚═════╝╚═╝    ╚═════╝ ╚══════╝╚══════╝    ╚═╝     ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝
+          [ PCI-DSS v4.0 LEVEL 1 ENFORCED • ZERO-TRUST AIR-GAPPED FINANCIAL ENGINE ]
+```
 
-# 🏛️ FINTECH CORE FABRIC
-### Autonomous Zero-Trust Interbank Clearing & Multi-Tier Hybrid VPC Pipeline
-**Mission-Critical AWS Payment Processing Architecture • Multi-AZ Active/Active Resilient Core**
+# 🏦 AUTONOMOUS FINTECH CORE FABRIC
+### Mission-Critical Hybrid Cloud Architecture • PCI-DSS v4.0 Level 1 Baseline • Systems Engineering Whitepaper
 
 <br/>
 
@@ -277,9 +284,9 @@ All architectural controls have been formally verified through live runtime exec
 ## 🛠️ Deployment Methodology & Systems Operations
 
 This mission-critical architecture was deployed, tuned, and verified through structured **Cloud Systems Operations**:
-- **Enterprise Infrastructure Provisioning:** Configured natively using AWS Architecture Management Consoles & automated AWS CLI calls in **AWS CloudShell**.
-- **Zero-Credential Instance Bootstrapping:** Production nodes provisioned with customized User-Data bash routines enforcing unprivileged process sandboxing.
-- **Continuous Security Auditing:** Formally validated against route table leakages, unauthorized perimeter scans, and end-to-end WORM compliance before automated resource lifecycle deprovisioning.
+* **Enterprise Infrastructure Provisioning:** Configured natively using AWS Architecture Management Consoles & automated AWS CLI calls in **AWS CloudShell**.
+* **Zero-Credential Instance Bootstrapping:** Production nodes provisioned with customized User-Data bash routines enforcing unprivileged process sandboxing.
+* **Continuous Security Auditing:** Formally validated against route table leakages, unauthorized perimeter scans, and end-to-end WORM compliance before automated resource lifecycle deprovisioning.
 
 ---
 
