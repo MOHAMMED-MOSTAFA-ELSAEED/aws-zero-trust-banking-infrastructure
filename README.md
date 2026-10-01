@@ -1,458 +1,299 @@
 <div align="center">
 
-# 🏛️ AUTONOMOUS FINTECH CORE FABRIC
-### Mission-Critical Hybrid Cloud Architecture • PCI-DSS v4.0 Level 1 Baseline • Systems Engineering Whitepaper
-**Production-Grade Multi-AZ Active/Active Financial Infrastructure**
+# 🏛️ Autonomous FinTech Core Fabric
 
-<br/>
+**A zero-trust, dual-AZ payment processing architecture on AWS, designed against PCI-DSS v4.0 controls and connected to an on-premises core banking site over IPsec/BGP.**
 
-[![Infrastructure: AWS](https://img.shields.io/badge/AWS-Enterprise_Cloud-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![Compliance: PCI-DSS v4.0](https://img.shields.io/badge/PCI--DSS_v4.0-Level_1_Compliant-008559?style=for-the-badge&logo=visa&logoColor=white)](#-regulatory-compliance-matrix-pci-dss-v40)
-[![Perimeter: Zero-Trust](https://img.shields.io/badge/Perimeter-Zero--Trust_SSM-critical?style=for-the-badge&logo=auth0&logoColor=white)](#-regulatory-compliance-matrix-pci-dss-v40)
-[![Cryptography: Envelope KMS](https://img.shields.io/badge/Cryptography-Hardware_KMS_CMK-blue?style=for-the-badge&logo=amazon-aws&logoColor=white)](#module-2-identity-cryptography--access-boundaries)
-[![Hybrid Fabric: Transit Gateway](https://img.shields.io/badge/Networking-Transit_Gateway_BGP-8C4FFF?style=for-the-badge&logo=cisco&logoColor=white)](#-deep-dive-transaction-lifecycle--packet-flow)
-[![Availability: 99.999% SLA](https://img.shields.io/badge/SLA-99.999%25_Active%2FActive-success?style=for-the-badge&logo=checkmarx&logoColor=white)](#-system-architecture-blueprint)
+[![AWS](https://img.shields.io/badge/AWS-Multi--AZ-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
+[![PCI-DSS](https://img.shields.io/badge/PCI--DSS_v4.0-Aligned-008559?style=for-the-badge)](#-pci-dss-v40-control-mapping)
+[![Zero Trust](https://img.shields.io/badge/Access-Zero--Trust_(SSM)-critical?style=for-the-badge)](#-security-design)
+[![KMS](https://img.shields.io/badge/Encryption-KMS_CMK-blue?style=for-the-badge&logo=amazon-aws&logoColor=white)](#-security-design)
+[![Transit Gateway](https://img.shields.io/badge/Hybrid-Transit_Gateway_%2B_BGP-8C4FFF?style=for-the-badge)](#-transaction-flow)
 
-<br/>
-
-<p align="center">
-  <b>A Production-Grade, Dual-AZ Active/Active Financial Payment Processing Engine Built on AWS. Features Complete Public Isolation, Hardware-Backed Cryptographic Ledgering, Edge Threat Mitigation, and On-Premises Mainframe Peering.</b>
-</p>
-
----
-
-[Executive Overview](#-executive-overview) • [System Blueprint](#-system-architecture-blueprint) • [Compliance Matrix](#-regulatory-compliance-matrix-pci-dss-v40) • [Packet Flow](#-deep-dive-transaction-lifecycle--packet-flow) • [All 20 Visual Proofs](#-full-scale-production-verification-gallery-all-20-artifacts) • [Systems Operations](#-deployment-methodology--systems-operations) • [Kernel Hardening](#-os--kernel-level-hardening-cis-benchmark) • [Chaos Engineering](#-chaos-engineering--failure-mode-analysis) • [Clearing Daemon](#-microservices-mock-engine-source) • [Author](#-engineering-profile--contacts)
-
----
+[Overview](#-overview) · [Architecture](#-architecture) · [Security](#-security-design) · [PCI-DSS Mapping](#-pci-dss-v40-control-mapping) · [Transaction Flow](#-transaction-flow) · [Verification Gallery](#-verification-gallery) · [Hardening](#-os--kernel-hardening) · [Resilience](#-resilience--failure-modes) · [Sample Service](#-sample-clearing-service) · [Author](#-author)
 
 </div>
 
-<br/>
+---
 
-## 📌 Executive Overview
+## 📌 Overview
 
-In institutional financial networks, traditional perimeter-only defense models are obsolete. Modern core transaction engines require architectures designed around **Zero-Trust Networking (ZTN)** and **Defense-in-Depth**, operating on three non-negotiable principles:
+Perimeter-only defense is not enough for financial workloads. This project implements a reference payment infrastructure built on three principles:
 
-1. **Deterministic Micro-Segmentation:** Internal settlement and compute engines must operate in complete air-gapped isolation with mathematically zero route propagation to public transit gateways or internet routers[cite: 1].
-2. **Zero Ambient Authority:** Identity-based cryptographic tokens govern all intra-service and administrative communication; static long-lived credentials, bastion hosts, and administrative SSH (Port 22) are entirely eradicated[cite: 1].
-3. **Hardware-Enforced Cryptographic Immutability:** Financial transaction ledgers and audit records must satisfy Write-Once-Read-Many (WORM) mandates with hardware-backed encryption keys and cryptographically sealed digests[cite: 1].
+| Principle | What it means here |
+| :--- | :--- |
+| **Network micro-segmentation** | Compute and data tiers have no route to the internet. The data tier's route table contains only the local VPC route. |
+| **Zero standing access** | No bastion hosts, no SSH (port 22), no long-lived credentials. Administration goes through AWS Systems Manager over PrivateLink. |
+| **Cryptographic immutability** | Audit records are encrypted with a customer-managed KMS key and stored in a versioned, locked-down S3 vault. |
 
-This repository demonstrates a fully hardened, multi-tier financial payment infrastructure deployed natively on **Amazon Web Services (AWS)**, formally benchmarked against the strict parameters of the **Payment Card Industry Data Security Standard (PCI-DSS v4.0 Level 1)**.
+> **Scope note:** This is a reference architecture and lab deployment. The clearing service is a mock that returns canned responses, and "PCI-DSS aligned" means the design maps to PCI-DSS v4.0 controls. It is **not** a formal compliance attestation.
 
 ---
 
-## 🏛️ System Architecture Blueprint
+## 🏗️ Architecture
 
 <div align="center">
-  <img src="architecture.png" alt="High-Level FinTech Enterprise Architecture" width="100%">
+  <img src="architecture.png" alt="High-level architecture diagram" width="100%">
 </div>
 
-### Architectural Topology Breakdown
+### Design highlights
 
-* **Dual-AZ Redundancy:** Infrastructure spans availability zones `eu-west-1a` and `eu-west-1b` in an Active/Active posture, providing real-time multi-site resilience with automatic failover[cite: 1].
-* **3-Tier Subnet Segmentation:**
-  * **Public Ingress Tier:** Houses solely the Application Load Balancer and AWS WAF v2 perimeter endpoints[cite: 1].
-  * **Private Processing Tier:** Hosts the hardened financial clearing daemons on isolated compute instances; completely blocked from direct internet inbound and outbound traffic[cite: 1].
-  * **Air-Gapped Data Tier:** Hosts persistence layers (Aurora Multi-AZ and ElastiCache Valkey); isolated via route tables containing exclusively local VPC routes (`10.100.0.0/16 -> local`)[cite: 1].
-* **Zero-Trust Administrative Hub:** Full administration executed without public exposure via AWS PrivateLink Interface Endpoints (SSM, EC2 Messages, and SSM Messages)[cite: 1].
+- **Dual-AZ, active/active:** Resources span `eu-west-1a` and `eu-west-1b` behind a cross-zone load balancer.
+- **Three-tier subnet model:**
+  - **Public tier:** Application Load Balancer and AWS WAF only.
+  - **Private tier:** Payment engines with no public IPs and no direct internet path.
+  - **Isolated data tier:** Aurora and ElastiCache (Valkey), with route tables containing only `10.100.0.0/16 → local`.
+- **Private administration:** SSM, EC2 Messages, and SSM Messages interface endpoints replace SSH and bastions.
+- **Hybrid connectivity:** Transit Gateway with IPsec Site-to-Site VPN and BGP (ASN 64512 ↔ 65000) to the on-premises core banking site.
 
-### Detailed Component & SLA Matrix
+### Component matrix
 
-| Layer | Subnet Tier & CIDRs | AWS Core Services | Redundancy & HA | Security Boundaries |
+| Layer | Subnets | Services | High availability | Key controls |
 | :--- | :--- | :--- | :--- | :--- |
-| **Ingress Edge** | `10.100.1.0/24`<br/>`10.100.2.0/24`[cite: 1] | AWS WAF v2<br/>Dual-AZ Public ALB[cite: 1] | Multi-AZ Active/Active<br/>Cross-Zone Load Balanced | WAF OWASP CRS, SQLi, Rate Limiting; Port 443 Ingress only[cite: 1]. |
-| **Compute Engine** | `10.100.10.0/24`<br/>`10.100.20.0/24`[cite: 1] | Hardened EC2 Nodes<br/>AWS Systems Manager[cite: 1] | Dual-AZ Active/Active<br/>Auto-Healing Target Groups | Zero Public IPs; Port 22 Closed; Accessible solely via PrivateLink SSM[cite: 1]. |
-| **Air-Gapped Data** | `10.100.30.0/24`<br/>`10.100.40.0/24`[cite: 1] | Aurora Multi-AZ<br/>ElastiCache Valkey[cite: 1] | Synchronous Multi-AZ Engine<br/>Sub-millisecond Read Replica[cite: 1] | Route table contains exclusively `10.100.0.0/16 -> local`[cite: 1]. |
-| **Cryptographic Core** | Managed Fabric Plane | AWS KMS (CMK)<br/>S3 WORM Vault[cite: 1] | Cross-Region Capable<br/>99.999999999% Durability | SSE-KMS hardware envelope encryption; Versioning enforced[cite: 1]. |
-| **Hybrid Transit** | Dedicated TGW Subnets | AWS Transit Gateway<br/>IPSec Site-to-Site VPN[cite: 1] | Active / Standby BGP ECMP<br/>Tunnels with Cairo HQ[cite: 1] | ASN 64512 ↔ ASN 65000 peering with IPsec Phase 2 AES-GCM-256[cite: 1]. |
+| **Ingress** | `10.100.1.0/24`, `10.100.2.0/24` | AWS WAF v2, public ALB | Multi-AZ, cross-zone | OWASP Core Rule Set, SQLi rules, rate limiting, HTTPS only |
+| **Compute** | `10.100.10.0/24`, `10.100.20.0/24` | EC2, Systems Manager | Multi-AZ, health-checked target group | No public IPs, port 22 closed, SSM via PrivateLink |
+| **Data** | `10.100.30.0/24`, `10.100.40.0/24` | Aurora PostgreSQL, ElastiCache (Valkey) | Multi-AZ | Local-only routing |
+| **Crypto & audit** | Managed plane | KMS CMK, S3 vault | 11 nines durability (S3) | SSE-KMS, versioning, Block Public Access |
+| **Hybrid transit** | Dedicated TGW subnets | Transit Gateway, Site-to-Site VPN | Dual tunnels, BGP | IPsec AES-GCM-256 |
 
 ---
 
-## 🔒 Regulatory Compliance Matrix (PCI-DSS v4.0)
+## 🔐 Security Design
 
-Every architectural component in this deployment maps directly to strict controls defined within the PCI-DSS v4.0 Level 1 specification:
+- **Network isolation:** Private and data tiers have no `0.0.0.0/0` route. Security groups allow port 8080 only from the ALB's security group.
+- **Identity-based access:** Instances use an IAM role (`AmazonSSMManagedInstanceCore` plus a scoped inline policy limited to the audit bucket).
+- **Encryption at rest:** A dedicated KMS customer-managed key (`alias/fintech-core`) with automatic annual rotation protects the persistence layers.
+- **Encryption in transit:** TLS terminates at the ALB; AWS service traffic uses VPC endpoints; the hybrid link uses IPsec.
+- **Edge protection:** AWS WAF v2 filters SQLi, XSS, and floods (rate limit: 500 requests/min per client).
+- **Tamper-resistant audit trail:** Logs are written to a versioned, SSE-KMS encrypted S3 bucket with all Block Public Access settings enabled.
 
-```text
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                              PCI-DSS v4.0 FORMAL MAPPING                               │
-├─────────────────────┬──────────────────────────────────────────┬───────────────────────┤
-│ Requirement Target  │ Architectural Mitigation Control         │ Verification Method   │
-├─────────────────────┼──────────────────────────────────────────┼───────────────────────┤
-│ Req 1.2: Isolation  │ 3-Tier VPC Architecture (Public/Priv/Iso)│ Route Table Audit     │
-│ Req 2.1: Default Sec│ Port 22 SSH eradicated; Zero Inbound SG  │ Port Scan Proof       │
-│ Req 3.4: Protect CHD│ AES-256 KMS Envelope Encryption at Rest  │ KMS Key Status Audit  │
-│ Req 4.1: Encryption │ TLS 1.3 Ingress + AWS PrivateLink Transit│ SSL Labs & VPC Flow   │
-│ Req 6.4: App Defense│ AWS WAF v2 Web ACL with OWASP Top 10     │ Synthetic Injection   │
-│ Req 10.2: Audit Logs│ Immutable S3 Vault with Object Lock/Vers.│ AWS CloudTrail Digest │
-└─────────────────────┴──────────────────────────────────────────┴───────────────────────┘
+---
+
+## 🔒 PCI-DSS v4.0 Control Mapping
+
+| Requirement | Control implemented | Evidence |
+| :--- | :--- | :--- |
+| **1.2** Network segmentation | Three-tier VPC; isolated data tier | Route table audit ([#02](#module-1--network-topology), [#03](#module-1--network-topology)) |
+| **2.2** Secure configuration | SSH removed, no inbound admin ports, hardened sysctl profile | Security group review ([#16](#module-4--compute--data-tier)) |
+| **3.5** Protect stored data | KMS CMK, SSE-KMS, key rotation | KMS key status ([#06](#module-2--identity--cryptography)) |
+| **4.2** Protect data in transit | TLS at ingress, VPC endpoints, IPsec to on-prem | Endpoint status ([#04](#module-1--network-topology)) |
+| **6.4** Protect web applications | WAF v2 with OWASP rules attached to the ALB | WAF rules and association ([#11](#module-3--edge--load-balancing), [#12](#module-3--edge--load-balancing)) |
+| **10.2 / 10.3** Audit logs | Versioned, encrypted S3 vault; scoped write access | Vault properties ([#07](#module-2--identity--cryptography)) |
+
+> **Note:** Control numbers should be validated against your assessor's reading of the standard before use in any formal document.
+
+---
+
+## 🔄 Transaction Flow
+
+```mermaid
+flowchart TD
+    C["Client (cardholder / bank)"] -->|"HTTPS, TLS 1.3, 443"| W["AWS WAF v2<br/>SQLi · XSS · rate limit"]
+    W --> A["Public ALB (Multi-AZ)<br/>TLS termination"]
+    A -->|"8080, from ALB SG only"| E["Private payment engines<br/>eu-west-1a / 1b"]
+    E -->|"6379"| D["Isolated data tier<br/>ElastiCache · Aurora"]
+    E -->|"VPC endpoint"| S["S3 audit vault (SSE-KMS)"]
+    E --> T["Transit Gateway<br/>BGP ASN 64512"]
+    T -->|"IPsec tunnels"| H["Cairo HQ core banking<br/>ASN 65000 · mainframe"]
 ```
 
-* **Network Segmentation (Requirement 1.2):** Compute instances are completely isolated from direct public routing; the data tier operates with absolute zero route paths to the internet[cite: 1].
-* **System Hardening (Requirement 2.1):** All administrative ports (including Port 22 SSH) are closed in security groups[cite: 1]. Instances run hardened Linux kernels with IP forwarding disabled and SYN-flood protection active.
-* **Cryptographic Protection (Requirement 3.4):** Dedicated Customer Managed Keys (CMK) configured in AWS KMS enforce envelope encryption across all persistence layers with automated annual hardware key rotation[cite: 1].
-* **Transmission Security (Requirement 4.1):** Edge-to-core communication terminates exclusively on TLS 1.3 ciphers, and inter-service routing is confined to AWS PrivateLink endpoints[cite: 1].
-* **Edge Web Application Firewall (Requirement 6.4):** AWS WAF v2 intercepts and filters all edge requests, mitigating SQL injection, cross-site scripting (XSS), and HTTP floods exceeding rate limits[cite: 1].
-* **Audit Trail Immutability (Requirement 10.2):** Transaction records and system execution logs are deposited into an S3 WORM vault with Object Lock and Versioning enabled[cite: 1].
+1. **Edge filtering:** The client connects over HTTPS; WAF inspects and rate-limits requests.
+2. **Reverse proxy:** The ALB terminates TLS and forwards clean traffic to healthy private targets on port 8080.
+3. **Processing:** The engine validates the session against the in-memory cache and generates a clearing response.
+4. **Audit:** An audit object is written to the S3 vault through the VPC endpoint, without internet access.
+5. **Settlement:** Cleared payloads are forwarded over the Transit Gateway and IPsec/BGP tunnels to the on-premises mainframe.
 
 ---
 
-## 🔄 Deep-Dive: Transaction Lifecycle & Packet Flow
+## 📸 Verification Gallery
 
-The lifecycle of an inbound transaction follows an audited, strictly authenticated data plane:
+All 20 artifacts below are screenshots from the live deployment.
 
-```text
-[ External Client: Cardholder / Bank Client ]
-                │
-                │ HTTPS (TLS 1.3 / Port 443)
-                ▼
-     ┌─────────────────────┐
-     │     AWS WAF v2      │  ◄── Edge Inspection: SQLi, XSS, Rate Limiting (500 req/min)
-     └──────────┬──────────┘
-                │ Verified Clean Ingress
-                ▼
-     ┌─────────────────────┐
-     │  Public Multi-AZ    │
-     │   Application LB    │  (Terminates TLS; Encapsulates HTTP reverse proxy)
-     └──────────┬──────────┘
-                │
-                │ Internal Forward (Port 8080 - Encapsulated to App SG ID only)
-                ▼
-     ┌──────────────────────────────────────────────┐
-     │   Private Payment Engine (eu-west-1a/b)      │
-     │   - Zero Public IPv4 Addresses               │
-     │   - AWS SSM Daemon for Identity Management   │
-     └──────┬───────────────────────┬───────────────┘
-            │                       │
-     Internal Cache Token           │ IPC Dynamic Routing
-     (Port 6379 / Valkey)           ▼
-            │            ┌──────────────────────────────────────────────┐
-            │            │ AWS Transit Gateway (BGP ASN 64512)          │
-            │            └──────────────────────┬───────────────────────┘
-            ▼                                   │
-┌────────────────────────┐                      │ IPsec Encrypted Dynamic Tunnel
-│ Air-Gapped Data Layer  │                      ▼
-│ - ElastiCache (Valkey) │         ┌───────────────────────────────────────────┐
-│ - Aurora PostgreSQL    │         │ Cairo HQ Core Banking DC (ASN 65000)      │
-└────────────────────────┘         │ - Legacy Settlement Mainframe (192.168.1.50)│
-                                   └───────────────────────────────────────────┘
-```
+### Module 1 · Network Topology
 
-1. **Ingress & Edge Filtering:** Client initiates request over TLS 1.3. AWS WAF inspects payloads using CRS rules and rate-limits rogue clients[cite: 1].
-2. **Reverse Proxying:** Clean traffic hits the ALB, which strips external metadata and routes over Port 8080 directly to healthy private instances[cite: 1].
-3. **Processing & Verification:** Core daemon authenticates the session, validates tokens against in-memory ElastiCache Valkey instances, and generates cryptographic clearing signatures.
-4. **Audit Immutability:** Instance streams an audit log object directly to the S3 Compliance Vault using AWS PrivateLink endpoints, bypassing the public internet entirely[cite: 1].
-5. **Mainframe Settlement:** Cleared payloads are dynamically forwarded over the AWS Transit Gateway via active BGP IPsec tunnels to the on-premise mainframe core[cite: 1].
+| | |
+| :---: | :---: |
+| **01 · Multi-AZ resource map**<br/><img src="screenshots/01-vpc-resource-map.png" alt="VPC resource map"/><br/>Six subnets across two AZs; nothing sensitive in public subnets. | **02 · Private app route table**<br/><img src="screenshots/02-private-route-table.png" alt="Private route table"/><br/>No `0.0.0.0/0 → igw` route. |
+| **03 · Isolated data route table**<br/><img src="screenshots/03-isolated-route-table.png" alt="Isolated route table"/><br/>Only `10.100.0.0/16 → local`. | **04 · VPC endpoints**<br/><img src="screenshots/04-vpc-endpoints-hub.png" alt="VPC endpoints"/><br/>SSM, KMS interface endpoints and S3 gateway endpoint available. |
 
----
+**05 · Private DNS resolution**
+<div align="center"><img src="screenshots/05-ssm-endpoint-dns.png" width="70%" alt="Private DNS resolution"/></div>
 
-## 📸 Full-Scale Production Verification Gallery (All 20 Artifacts)
+Internal lookups of `ssm.eu-west-1.amazonaws.com` resolve to private endpoint IPs.
 
-All architectural components have been deployed, configured, and verified through live console audits and runtime operations:
+### Module 2 · Identity & Cryptography
 
-### Module 1: Network Topology & Route Isolation
+| | |
+| :---: | :---: |
+| **06 · KMS CMK**<br/><img src="screenshots/06-kms-key-status.png" alt="KMS key status"/><br/>`alias/fintech-core`, rotation enabled. | **07 · S3 vault properties**<br/><img src="screenshots/07-s3-vault-properties.png" alt="S3 vault properties"/><br/>SSE-KMS and versioning enabled. |
+| **08 · Block Public Access**<br/><img src="screenshots/08-s3-block-public-access.png" alt="Block Public Access"/><br/>All four settings on. | **09 · IAM role**<br/><img src="screenshots/09-iam-role-policies.png" alt="IAM role policies"/><br/>SSM core policy plus inline policy. |
 
-<table align="center" width="100%">
-  <tr>
-    <td width="50%" align="center">
-      <h4>01. 3-Tier Multi-AZ Resource Map</h4>
-      <img src="screenshots/01-vpc-resource-map.png" alt="VPC Resource Map"/>
-      <p align="center"><b>Verification:</b> Complete segregation across 6 subnets over <code>eu-west-1a</code> and <code>eu-west-1b</code>. No database or private engines reside in public subnets[cite: 1].</p>
-    </td>
-    <td width="50%" align="center">
-      <h4>02. Private Application Route Table</h4>
-      <img src="screenshots/02-private-route-table.png" alt="Private Route Table"/>
-      <p align="center"><b>Verification:</b> Confirms complete absence of default internet route (<code>0.0.0.0/0 -&gt; igw</code>). Traffic remains inside internal fabrics.</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <h4>03. Air-Gapped Data Layer Route Table</h4>
-      <img src="screenshots/03-isolated-route-table.png" alt="Isolated Route Table"/>
-      <p align="center"><b>Verification:</b> Strict PCI-DSS baseline proof showing exclusively <code>10.100.0.0/16 -&gt; local</code>. Impossible for database layer to route externally.</p>
-    </td>
-    <td width="50%" align="center">
-      <h4>04. AWS PrivateLink VPC Endpoints Hub</h4>
-      <img src="screenshots/04-vpc-endpoints-hub.png" alt="Endpoints Hub"/>
-      <p align="center"><b>Verification:</b> Interface Endpoints for SSM, KMS, and Gateway Endpoint for S3 confirmed in healthy <code>Available</code> state[cite: 1].</p>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center">
-      <h4>05. Private DNS Resolution Override</h4>
-      <div align="center"><img src="screenshots/05-ssm-endpoint-dns.png" width="70%" alt="Private DNS Resolution"/></div>
-      <p align="center"><b>Verification:</b> Validates that queries originating from internal engines to <code>ssm.eu-west-1.amazonaws.com</code> are hijacked at Route 53 resolver and mapped to internal private IPs.</p>
-    </td>
-  </tr>
-</table>
+**10 · Scoped inline policy**
+<div align="center"><img src="screenshots/10-iam-inline-policy.png" width="70%" alt="IAM inline policy"/></div>
 
-### Module 2: Identity, Cryptography & Access Boundaries
+`PutObject`, `GetObject`, and `ListBucket` restricted to the audit vault ARN.
 
-<table align="center" width="100%">
-  <tr>
-    <td width="50%" align="center">
-      <h4>06. Dedicated KMS CMK Encryption Key</h4>
-      <img src="screenshots/06-kms-key-status.png" alt="KMS Key Status"/>
-      <p align="center"><b>Verification:</b> Customer Managed Key (CMK) <code>alias/fintech-core</code> enabled with automated hardware rotation[cite: 1].</p>
-    </td>
-    <td width="50%" align="center">
-      <h4>07. S3 Compliance Vault WORM Properties</h4>
-      <img src="screenshots/07-s3-vault-properties.png" alt="S3 Bucket Properties"/>
-      <p align="center"><b>Verification:</b> Enforces Server-Side Encryption with KMS (SSE-KMS) paired with Bucket Versioning for tamper-proof auditing[cite: 1].</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <h4>08. Block Public Access (100% Enforced)</h4>
-      <img src="screenshots/08-s3-block-public-access.png" alt="S3 Block Public Access"/>
-      <p align="center"><b>Verification:</b> All four public exposure vectors toggled ON at the bucket level, preventing public leakage.</p>
-    </td>
-    <td width="50%" align="center">
-      <h4>09. Machine Role Policy Attachment</h4>
-      <img src="screenshots/09-iam-role-policies.png" alt="IAM Role Summary"/>
-      <p align="center"><b>Verification:</b> The instance execution profile couples managed systems administration (<code>AmazonSSMManagedInstanceCore</code>) with dedicated inline policies[cite: 1].</p>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center">
-      <h4>10. Custom Scoped IAM Inline Policy</h4>
-      <div align="center"><img src="screenshots/10-iam-inline-policy.png" width="70%" alt="IAM Inline Policy"/></div>
-      <p align="center"><b>Verification:</b> Scoped permissions locking S3 <code>PutObject</code>, <code>GetObject</code>, and <code>ListBucket</code> actions strictly to the audit vault bucket ARN.</p>
-    </td>
-  </tr>
-</table>
+### Module 3 · Edge & Load Balancing
 
-### Module 3: Edge Ingress & Load Balancing Resilience
+| | |
+| :---: | :---: |
+| **11 · WAF rules**<br/><img src="screenshots/11-waf-rules-dashboard.png" alt="WAF rules"/><br/>Core Rule Set and SQLi protections. | **12 · WAF ↔ ALB association**<br/><img src="screenshots/12-waf-alb-association.png" alt="WAF association"/><br/>Web ACL bound to the public ALB. |
+| **13 · ALB configuration**<br/><img src="screenshots/13-alb-details.png" alt="ALB details"/><br/>Internet-facing, dual-AZ, dedicated security group. | **14 · Target health**<br/><img src="screenshots/14-target-group-healthy.png" alt="Target group health"/><br/>2/2 targets healthy on port 8080. |
 
-<table align="center" width="100%">
-  <tr>
-    <td width="50%" align="center">
-      <h4>11. AWS WAF v2 Protective Rulesets</h4>
-      <img src="screenshots/11-waf-rules-dashboard.png" alt="WAF Rules"/>
-      <p align="center"><b>Verification:</b> Regional Web ACL actively inspecting traffic via AWS Core Rule Set (CRS) and SQLi mitigation engines[cite: 1].</p>
-    </td>
-    <td width="50%" align="center">
-      <h4>12. Web ACL to ALB Resource Binding</h4>
-      <img src="screenshots/12-waf-alb-association.png" alt="WAF Associated Resources"/>
-      <p align="center"><b>Verification:</b> Verification that the public Application Load Balancer is enclosed directly within the protective perimeter of the Web ACL[cite: 1].</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <h4>13. Public ALB Configuration & DNS</h4>
-      <img src="screenshots/13-alb-details.png" alt="ALB Details"/>
-      <p align="center"><b>Verification:</b> Dual-AZ entry endpoint specifications displaying internet-facing scheme, DNS distribution, and security group isolation[cite: 1].</p>
-    </td>
-    <td width="50%" align="center">
-      <h4>14. Target Group Health Status (2/2 Healthy)</h4>
-      <img src="screenshots/14-target-group-healthy.png" alt="Target Group Status"/>
-      <p align="center"><b>Verification:</b> Critical operational milestone: Both <code>Engine 01</code> and <code>02</code> reporting healthy status across AZs on port 8080[cite: 1].</p>
-    </td>
-  </tr>
-</table>
+### Module 4 · Compute & Data Tier
 
-### Module 4: Compute Hardening & Air-Gapped Data Layer
+| | |
+| :---: | :---: |
+| **15 · Private instances**<br/><img src="screenshots/15-ec2-private-instances.png" alt="EC2 private instances"/><br/>RFC 1918 addresses only; no public IPv4. | **16 · App security group**<br/><img src="screenshots/16-app-security-group.png" alt="App security group"/><br/>Port 8080 allowed only from the ALB security group. |
 
-<table align="center" width="100%">
-  <tr>
-    <td width="50%" align="center">
-      <h4>15. Zero-Public IP Compute Configuration</h4>
-      <img src="screenshots/15-ec2-private-instances.png" alt="EC2 Instance Details"/>
-      <p align="center"><b>Verification:</b> Proof of hardened instance configuration showing only private RFC 1918 addressing assigned (<code>10.100.10.x</code>) and empty Public IPv4 field[cite: 1].</p>
-    </td>
-    <td width="50%" align="center">
-      <h4>16. Application Firewall Tiering</h4>
-      <img src="screenshots/16-app-security-group.png" alt="App Security Group Rules"/>
-      <p align="center"><b>Verification:</b> Stateful firewall rules showing TCP port 8080 traffic permitted exclusively from the ALB security group ID.</p>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center">
-      <h4>17. Air-Gapped Data Cluster Infrastructure</h4>
-      <div align="center"><img src="screenshots/17-isolated-data-tier.png" width="70%" alt="Isolated Data Stores"/></div>
-      <p align="center"><b>Verification:</b> Demonstrates ElastiCache Valkey in-memory clustering operating cleanly within the isolated, air-gapped subnet boundaries[cite: 1].</p>
-    </td>
-  </tr>
-</table>
+**17 · Isolated data tier**
+<div align="center"><img src="screenshots/17-isolated-data-tier.png" width="70%" alt="Isolated data tier"/></div>
 
-### Module 5: Live Execution Proofs & Terminal Outputs
+ElastiCache (Valkey) running inside the isolated subnets.
 
-<table align="center" width="100%">
-  <tr>
-    <td colspan="2" align="center">
-      <h4>18. Zero-Internet S3 Ledger Write (via SSM)</h4>
-      <div align="center"><img src="screenshots/18-ssm-s3-audit-upload.png" width="80%" alt="SSM S3 Upload"/></div>
-      <p align="center"><b>Execution Proof:</b> Interactive shell via AWS SSM Session Manager uploading encrypted audit record over PrivateLink without internet access[cite: 1].</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <h4>19. Edge Ingress Health Check Polling</h4>
-      <img src="screenshots/19-api-health-check.png" alt="API Health Check"/>
-      <p align="center"><b>Verification:</b> HTTP GET <code>/health</code> polling over browser via ALB & WAF returning operational status 200 OK[cite: 1].</p>
-    </td>
-    <td width="50%" align="center">
-      <h4>20. Live Financial Transaction Clearance</h4>
-      <img src="screenshots/20-api-live-transaction-post.png" alt="Live POST Transaction"/>
-      <p align="center"><b>Clearance Proof:</b> HTTP POST <code>/api/v1/transaction</code> execution authorizing $100K payment cleared via Core Banking[cite: 1].</p>
-    </td>
-  </tr>
-</table>
+### Module 5 · Live Execution
+
+**18 · S3 audit write via SSM (no internet)**
+<div align="center"><img src="screenshots/18-ssm-s3-audit-upload.png" width="80%" alt="SSM S3 upload"/></div>
+
+| | |
+| :---: | :---: |
+| **19 · Health check**<br/><img src="screenshots/19-api-health-check.png" alt="API health check"/><br/>`GET /health` through WAF and ALB returns 200. | **20 · Transaction POST**<br/><img src="screenshots/20-api-live-transaction-post.png" alt="Transaction POST"/><br/>`POST /api/v1/transaction` returns an approved response. |
 
 ---
 
-## 🛠️ Deployment Methodology & Systems Operations
+## 🛠️ Deployment
 
-This mission-critical architecture was deployed, tuned, and verified through structured **Cloud Systems Operations**:
-* **Enterprise Infrastructure Provisioning:** Configured natively using AWS Architecture Management Consoles & automated AWS CLI calls in **AWS CloudShell**.
-* **Zero-Credential Instance Bootstrapping:** Production nodes provisioned with customized User-Data bash routines enforcing unprivileged process sandboxing.
-* **Continuous Security Auditing:** Formally validated against route table leakages, unauthorized perimeter scans, and end-to-end WORM compliance before automated resource lifecycle deprovisioning.
+- **Provisioning:** AWS Console and AWS CLI (CloudShell).
+- **Bootstrap:** EC2 user-data scripts install the service as an unprivileged `systemd` unit and apply the kernel hardening profile below.
+- **Validation:** Route table review, port-scan checks, and audit-write tests, followed by resource teardown to control cost.
 
 ---
 
-## 🐧 OS & Kernel-Level Hardening (CIS Benchmark)
+## 🐧 OS & Kernel Hardening
 
-To prevent side-channel exploits, network spoofing, and lateral kernel compromise on compute nodes, the initialization bootstraps the following `sysctl` profile:
+Applied at boot via `/etc/sysctl.d/99-pci-dss-hardening.conf` (aligned with CIS Linux benchmark guidance):
 
 ```ini
-# /etc/sysctl.d/99-pci-dss-hardening.conf
-# Mitigate IP Spoofing and Route Traversal
+# Reverse-path filtering (anti-spoofing)
 net.ipv4.conf.all.rp_filter = 1
 net.ipv4.conf.default.rp_filter = 1
 
-# Disable ICMP Redirect Acceptance (Prevents MITM)
+# Ignore ICMP redirects
 net.ipv4.conf.all.accept_redirects = 0
 net.ipv4.conf.default.accept_redirects = 0
 net.ipv4.conf.all.secure_redirects = 0
 
-# Disable IP Packet Forwarding (Nodes must not act as routers)
+# Nodes must not route traffic
 net.ipv4.ip_forward = 0
 
-# Protect against SYN Flood DoS Attacks
+# SYN flood protection
 net.ipv4.tcp_syncookies = 1
 net.ipv4.tcp_max_syn_backlog = 4096
 
-# Memory Allocation Security
+# Memory protections
 fs.suid_dumpable = 0
 kernel.randomize_va_space = 2
 ```
 
 ---
 
-## ⚡ Chaos Engineering & Failure Mode Analysis
+## ⚡ Resilience & Failure Modes
 
-To validate high-availability resilience under disaster scenarios, the architecture was modeled against the following failure domains:
+Expected behavior for each failure domain. Replace the recovery column with your own measured values if you run fault-injection tests.
 
-```text
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                               CHAOS & FAILURE DOMAIN ANALYSIS                          │
-├──────────────────────┬──────────────────────────────────────────┬──────────────────────┤
-│ Incident Scenario    │ Architectural Self-Healing Mechanism     │ Observed Downtime    │
-├──────────────────────┼──────────────────────────────────────────┼──────────────────────┤
-│ AZ Failure (eu-west) │ ALB shifts traffic to healthy AZ within  │ < 2.1 seconds        │
-│                      │ 2 health check cycles (Target Group)     │ (Zero 5xx dropped)   │
-├──────────────────────┼──────────────────────────────────────────┼──────────────────────┤
-│ Primary DB Crash     │ Aurora Multi-AZ automatic failover to    │ < 18 seconds         │
-│                      │ synchronous standby replica with same DNS│ (Connection replay)  │
-├──────────────────────┼──────────────────────────────────────────┼──────────────────────┤
-│ VPN Tunnel 1 Severed │ Transit Gateway dynamic BGP reconvergence│ Sub-second           │
-│                      │ automatically fails over to Tunnel 2     │ (BGP Keepalive trip) │
-├──────────────────────┼──────────────────────────────────────────┼──────────────────────┤
-│ Compromised Shell    │ Zero local keys exist; IAM revocations   │ Instantaneous        │
-│                      │ immediately terminate SSM sessions       │ (Zero persistence)   │
-└──────────────────────┴──────────────────────────────────────────┴───────────────────────┘
-```
+| Scenario | Self-healing mechanism | Expected recovery |
+| :--- | :--- | :--- |
+| AZ failure | ALB health checks remove unhealthy targets; traffic shifts to the surviving AZ | A few health-check cycles |
+| Aurora primary failure | Automatic Multi-AZ failover; cluster endpoint DNS points to the new primary | Typically tens of seconds |
+| VPN tunnel failure | BGP withdraws the failed path; traffic moves to the second tunnel | Seconds (depends on BGP timers) |
+| Compromised instance | No local keys or SSH; revoking the IAM role terminates SSM access | Immediate on revocation |
 
 ---
 
-## 💻 Microservices Mock Engine Source
+## 💻 Sample Clearing Service
 
-The financial clearance daemon executes as a hardened, unprivileged `systemd` process utilizing Python 3 native standard libraries to eliminate third-party package attack surfaces:
+The payment engine is a mock built on the Python 3 standard library only (no third-party packages). It returns canned responses to demonstrate the traffic path; it does not process real payments.
+
+<details>
+<summary><b>View source (<code>app/clearing_daemon.py</code>)</b></summary>
 
 ```python
 #!/usr/bin/env python3
-"""
-===================================================================
-Mission-Critical Financial Settlement Daemon
-PCI-DSS v4.0 Compliant | Zero Third-Party Dependencies
-===================================================================
-"""
+"""Mock financial clearing daemon (standard library only)."""
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 import socket
 import sys
 
+
 class FinancialClearingHandler(BaseHTTPRequestHandler):
     def _send_response(self, code: int, payload: dict):
         self.send_response(code)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('X-Content-Type-Options', 'nosniff')
-        self.send_header('X-Frame-Options', 'DENY')
-        self.send_header('Strict-Transport-Security', 'max-age=63072000; includeSubDomains')
+        self.send_header("Content-Type", "application/json")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Strict-Transport-Security",
+                         "max-age=63072000; includeSubDomains")
         self.end_headers()
-        self.wfile.write(json.dumps(payload, indent=2).encode('utf-8'))
+        self.wfile.write(json.dumps(payload, indent=2).encode("utf-8"))
 
     def do_GET(self):
-        if self.path == '/health':
+        if self.path == "/health":
             self._send_response(200, {
                 "status": "HEALTHY",
                 "instance_node": socket.gethostname(),
                 "tier": "PCI-DSS-Production-App",
-                "zero_trust_status": "Strict-Enforced"
+                "zero_trust_status": "Strict-Enforced",
             })
         else:
             self._send_response(404, {"error": "Resource Not Found"})
 
     def do_POST(self):
-        if self.path == '/api/v1/transaction':
+        if self.path == "/api/v1/transaction":
             self._send_response(200, {
                 "transaction_id": "TX-998241",
                 "status": "APPROVED",
                 "amount": "100,000.00 USD",
                 "cleared_via": "Core-Banking-Cairo",
                 "transit_route": "AWS-TGW-IPsec-BGP-Active",
-                "compliance": "PCI-DSS-v4.0-Level-1"
+                "compliance": "PCI-DSS-v4.0-Level-1",
             })
         else:
             self._send_response(404, {"error": "Invalid Clearing Route"})
 
+
 def run_server():
-    server_address = ('0.0.0.0', 8080)
-    httpd = HTTPServer(server_address, FinancialClearingHandler)
-    print("[*] Financial Core Daemon Initialized on Port 8080...")
+    httpd = HTTPServer(("0.0.0.0", 8080), FinancialClearingHandler)
+    print("[*] Financial core daemon listening on port 8080...")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\n[*] Gracefully Decommissioning...")
+        print("\n[*] Shutting down...")
         httpd.server_close()
         sys.exit(0)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     run_server()
 ```
 
+</details>
+
 ---
 
-## 👨‍💻 Engineering Profile & Contacts
+## 👨‍💻 Author
 
-<div align="center">
-
-**Mohammed Mostafa Elsaeed**  
-*Cloud Infrastructure & DevOps Engineer*  
-*Ain Shams University — Computer Engineering*
-
-<br/>
+**Mohammed Mostafa Elsaeed**
+Cloud Infrastructure & DevOps Engineer · Computer Engineering, Ain Shams University
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/mohammed-mostafa-elsaeed/)
 [![GitHub](https://img.shields.io/badge/GitHub-Profile-181717?style=for-the-badge&logo=github)](https://github.com/MOHAMMED-MOSTAFA-ELSAEED)
 
-</div>
-
-* **Cloud Certifications:** AWS Certified Solutions Architect – Associate (SAA-C03) • AWS Certified Cloud Practitioner
-* **Core Specialization:** Enterprise Cloud Networking, Zero-Trust Architecture, DevSecOps, Enterprise Linux Systems (RHEL)
-* **Focus Areas:** Mission-Critical Banking Infrastructure, High-Throughput Routing, PCI-DSS Alignment, Cryptographic Key Systems
+- **Certifications:** AWS Certified Solutions Architect – Associate (SAA-C03) · AWS Certified Cloud Practitioner
+- **Specialization:** Cloud networking, zero-trust architecture, DevSecOps, enterprise Linux (RHEL)
+- **Focus:** Banking-grade infrastructure, hybrid routing, PCI-DSS alignment, key management
 
 ---
 
-<div align="center">
-  <sub>Engineered with precision for institutional financial cloud compliance. Verified against PCI-DSS v4.0.</sub>
-</div>
+<div align="center"><sub>Reference architecture for financial cloud infrastructure, designed against PCI-DSS v4.0 controls.</sub></div>
