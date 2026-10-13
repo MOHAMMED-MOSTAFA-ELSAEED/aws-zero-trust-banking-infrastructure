@@ -36,14 +36,16 @@ Perimeter-only defense is not enough for financial workloads. This project imple
   <img src="architecture.png" alt="High-level architecture diagram" width="100%">
 </div>
 
+> **Diagram note:** The architecture image is a high-level schematic. The deployment evidence describes an **S3 gateway VPC endpoint**; if the diagram labels S3 as an *interface* endpoint, update the diagram separately to match the deployed endpoint type.
+
 ### Design highlights
 
 - **Dual-AZ, active/active:** Resources span `eu-west-1a` and `eu-west-1b` behind a cross-zone load balancer.
 - **Three-tier subnet model:**
-  - **Public tier:** Application Load Balancer and AWS WAF only.
+  - **Public tier:** An internet-facing Application Load Balancer spans two public subnets; AWS WAF protects it through a Web ACL association (WAF is not deployed inside a subnet).
   - **Private tier:** Payment engines with no public IPs and no direct internet path.
   - **Isolated data tier:** Aurora and ElastiCache (Valkey), with route tables containing only `10.100.0.0/16 → local`.
-- **Private administration:** SSM, EC2 Messages, and SSM Messages interface endpoints replace SSH and bastions.
+- **Private administration:** SSM, EC2 Messages, and SSM Messages interface endpoints replace SSH and bastions. S3 audit access uses an S3 gateway VPC endpoint, as documented in the verification gallery.
 - **Hybrid connectivity:** Transit Gateway with IPsec Site-to-Site VPN and BGP (ASN 64512 ↔ 65000) to the on-premises core banking site.
 
 ### Component matrix
@@ -62,7 +64,7 @@ Perimeter-only defense is not enough for financial workloads. This project imple
 
 - **Network isolation:** Private and data tiers have no `0.0.0.0/0` route. Security groups allow port 8080 only from the ALB's security group.
 - **Identity-based access:** Instances use an IAM role (`AmazonSSMManagedInstanceCore` plus a scoped inline policy limited to the audit bucket).
-- **Encryption at rest:** A dedicated KMS customer-managed key (`alias/fintech-core`) with automatic annual rotation protects the persistence layers.
+- **Encryption at rest:** A dedicated KMS customer-managed key (`alias/fintech-core`) with automatic annual rotation protects the SSE-KMS encrypted S3 audit vault; encryption settings for other data services should be verified separately.
 - **Encryption in transit:** TLS terminates at the ALB; AWS service traffic uses VPC endpoints; the hybrid link uses IPsec.
 - **Edge protection:** AWS WAF v2 filters SQLi, XSS, and floods (rate limit: 500 requests/min per client).
 - **Tamper-resistant audit trail:** Logs are written to a versioned, SSE-KMS encrypted S3 bucket with all Block Public Access settings enabled.
@@ -92,7 +94,7 @@ flowchart TD
     W --> A["Public ALB (Multi-AZ)<br/>TLS termination"]
     A -->|"8080, from ALB SG only"| E["Private payment engines<br/>eu-west-1a / 1b"]
     E -->|"6379"| D["Isolated data tier<br/>ElastiCache · Aurora"]
-    E -->|"VPC endpoint"| S["S3 audit vault (SSE-KMS)"]
+    E -->|"S3 gateway VPC endpoint"| S["S3 audit vault (SSE-KMS)"]
     E --> T["Transit Gateway<br/>BGP ASN 64512"]
     T -->|"IPsec tunnels"| H["Cairo HQ core banking<br/>ASN 65000 · mainframe"]
 ```
@@ -101,7 +103,7 @@ flowchart TD
 2. **Reverse proxy:** The ALB terminates TLS and forwards clean traffic to healthy private targets on port 8080.
 3. **Processing:** The engine validates the session against the in-memory cache and generates a clearing response.
 4. **Audit:** An audit object is written to the S3 vault through the VPC endpoint, without internet access.
-5. **Settlement:** Cleared payloads are forwarded over the Transit Gateway and IPsec/BGP tunnels to the on-premises mainframe.
+5. **Settlement (designed path):** In the reference architecture, clearing traffic would traverse the Transit Gateway and IPsec/BGP tunnels to the on-premises mainframe. The sample service returns mock responses and does not prove a live end-to-end settlement.
 
 ---
 
@@ -304,7 +306,7 @@ Expected behavior for each failure domain. Replace the recovery column with your
 | **AZ failure** | ALB health checks remove unhealthy targets; traffic shifts to the surviving AZ | A few health-check cycles |
 | **Aurora primary failure** | Automatic Multi-AZ failover; cluster endpoint DNS points to the new primary | Typically tens of seconds |
 | **VPN tunnel failure** | BGP withdraws the failed path; traffic moves to the second tunnel | Seconds (depends on BGP timers) |
-| **Compromised instance** | No local keys or SSH; revoking the IAM role terminates SSM access | Immediate on revocation |
+| **Compromised instance** | No SSH or locally stored long-lived keys; revoke access and isolate the instance using security controls | Revocation and credential propagation may take time; verify during incident-response testing |
 
 ---
 
@@ -340,8 +342,8 @@ class FinancialClearingHandler(BaseHTTPRequestHandler):
             self._send_response(200, {
                 "status": "HEALTHY",
                 "instance_node": socket.gethostname(),
-                "tier": "PCI-DSS-Production-App",
-                "zero_trust_status": "Strict-Enforced",
+                "tier": "PCI-DSS-Reference-Lab",
+                "zero_trust_status": "Design-Demo",
             })
         else:
             self._send_response(404, {"error": "Resource Not Found"})
@@ -352,9 +354,9 @@ class FinancialClearingHandler(BaseHTTPRequestHandler):
                 "transaction_id": "TX-998241",
                 "status": "APPROVED",
                 "amount": "100,000.00 USD",
-                "cleared_via": "Core-Banking-Cairo",
-                "transit_route": "AWS-TGW-IPsec-BGP-Active",
-                "compliance": "PCI-DSS-v4.0-Level-1",
+                "cleared_via": "Mock-Response-Only",
+                "transit_route": "Reference-Architecture-Not-Verified-By-This-Response",
+                "compliance_scope": "PCI-DSS-v4.0-Control-Mapping-Demo",
             })
         else:
             self._send_response(404, {"error": "Invalid Clearing Route"})
